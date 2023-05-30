@@ -1,4 +1,4 @@
-name: Run integration tests using Docker Compose
+name: Build and run integration tests
 on:
   pull_request:
     branches:
