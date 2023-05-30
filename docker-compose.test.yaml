@@ -16,3 +16,6 @@ services:
   balancer:
     # Для тестів включаємо режим відлагодження, коли балансувальник додає інформацію, кому було відправлено запит.
     command: ["lb", "--trace=true"]
+
+  server1:
+    command: ["server", "--test=true"]
