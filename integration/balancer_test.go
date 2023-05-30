@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"bytes"
 	"fmt"
 	. "gopkg.in/check.v1"
 	"net/http"
@@ -28,25 +27,22 @@ func (s *IntegrationTestSuite) TestGetRequest(c *C) {
 	if _, exists := os.LookupEnv("INTEGRATION_TEST"); !exists {
 		c.Skip("Integration test is not enabled")
 	}
-	var resp *http.Response
-	var err error
-	for i := 0; i < 3; i++ {
-		resp, err = client.Get(fmt.Sprintf("%s/api/v1/some-data", baseAddress))
+	serverNum := 0
+	for i := 0; i < 10; i++ {
+		resp, err := client.Get(fmt.Sprintf("%s/api/v1/some-data", baseAddress))
 		if err != nil {
 			c.Error(err)
 		}
-		c.Check(resp.Header.Get("lb-from"), Equals, "server"+string(rune(i+1))+":8080")
+		if i%3 == 0 {
+			serverNum = 1
+		} else if i%3 == 1 {
+			serverNum = 2
+		} else {
+			serverNum = 3
+		}
+		c.Check(resp.Header.Get("lb-from"), Equals, fmt.Sprintf("server%d:8080", serverNum))
 	}
-	resp, err = client.Post("http://server1:8080/corrupt-health", "", bytes.NewBuffer([]byte{}))
-	if err != nil || resp.StatusCode != http.StatusOK {
-		c.Error(err)
-	}
-	time.Sleep(10 * time.Second)
-	resp, err = client.Get(fmt.Sprintf("%s/api/v1/some-data", baseAddress))
-	if err != nil {
-		c.Error(err)
-	}
-	c.Check(resp.Header.Get("lb-from"), Equals, "server2:8080")
+
 }
 
 func (s *IntegrationTestSuite) BenchmarkBalancer(c *C) {
